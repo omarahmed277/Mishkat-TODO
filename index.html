@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mishkat MVP Todo List</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Custom styles for progress bars */
+        .progress-bar {
+            transition: width 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div id="app" class="max-w-6xl mx-auto p-6">
+        <!-- Header -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h1 class="text-3xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                🚀 Mishkat MVP - To Do List
+            </h1>
+            
+            <!-- Overall Progress -->
+            <div id="overall-progress" class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-4 text-white">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-4">
+                        <span class="text-lg font-semibold">إجمالي التقدم</span>
+                        <button id="share-progress" class="flex items-center gap-2 bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-1 rounded-full transition-all duration-200 text-sm" title="شارك التقدم">
+                            <i data-lucide="share-2" class="w-4 h-4"></i>
+                            شارك التقدم
+                        </button>
+                    </div>
+                    <span id="progress-percentage" class="text-xl font-bold">0%</span>
+                </div>
+                <div class="w-full bg-white bg-opacity-20 rounded-full h-3">
+                    <div id="progress-bar" class="bg-white rounded-full h-3 progress-bar" style="width: 0%"></div>
+                </div>
+                <div id="progress-stats" class="mt-2 text-sm opacity-90">
+                    0 من 32 مهمة مكتملة
+                </div>
+                
+                <!-- Share success message -->
+                <div id="share-message" class="hidden mt-3 bg-green-500 bg-opacity-20 border border-green-300 rounded-lg p-2 text-sm flex items-center gap-2">
+                    <i data-lucide="copy" class="w-4 h-4"></i>
+                    تم نسخ الرابط! شارك الرابط مع فريقك لمتابعة التقدم
+                </div>
+            </div>
+        </div>
+
+        <!-- URL Info -->
+        <div id="url-info" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <div class="flex items-start gap-3">
+                <div class="bg-blue-500 rounded-full p-1">
+                    <i data-lucide="share-2" class="w-4 h-4 text-white"></i>
+                </div>
+                <div class="flex-1">
+                    <h3 class="font-semibold text-blue-800 mb-1">💡 نصيحة</h3>
+                    <p class="text-blue-700 text-sm">
+                        الرابط الحالي محفوظ فيه التقدم بتاعك. لو شيرته مع حد هيشوف نفس المهام اللي خلصتها!
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Categories -->
+        <div id="categories" class="grid gap-6">
+            <!-- Categories will be dynamically populated -->
+        </div>
+
+        <!-- Footer Stats -->
+        <div id="footer-stats" class="mt-8 bg-white rounded-lg shadow-md p-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                <div class="p-4 bg-red-50 rounded-lg">
+                    <div id="high-priority-count" class="text-2xl font-bold text-red-600">0</div>
+                    <div class="text-sm text-red-600">مهام عالية الأولوية</div>
+                </div>
+                <div class="p-4 bg-yellow-50 rounded-lg">
+                    <div id="medium-priority-count" class="text-2xl font-bold text-yellow-600">0</div>
+                    <div class="text-sm text-yellow-600">مهام متوسطة الأولوية</div>
+                </div>
+                <div class="p-4 bg-green-50 rounded-lg">
+                    <div id="completed-count" class="text-2xl font-bold text-green-600">0</div>
+                    <div class="text-sm text-green-600">مهام مكتملة</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Task data
+        const tasks = [
+            // Landing Page
+            { id: 1, category: 'Landing Page', icon: 'rocket', task: 'تصميم Hero Section مع الأنيميشن', completed: false, priority: 'high' },
+            { id: 2, category: 'Landing Page', icon: 'palette', task: 'عمل Featured Courses Section (3 كورسات)', completed: false, priority: 'high' },
+            { id: 3, category: 'Landing Page', icon: 'users', task: 'قسم Mishkat Studio Program', completed: false, priority: 'medium' },
+            { id: 4, category: 'Landing Page', icon: 'users', task: 'Community Section مع Discord CTA', completed: false, priority: 'medium' },
+            { id: 5, category: 'Landing Page', icon: 'code', task: 'Get Started CTA Button', completed: false, priority: 'low' },
+            // Course Details Pages
+            { id: 6, category: 'Course Details', icon: 'palette', task: 'صفحة Computational Design Course', completed: false, priority: 'high' },
+            { id: 7, category: 'Course Details', icon: 'palette', task: 'صفحة Virtual Environments Course', completed: false, priority: 'high' },
+            { id: 8, category: 'Course Details', icon: 'palette', task: 'صفحة Interactive Prototyping Course', completed: false, priority: 'high' },
+            { id: 9, category: 'Course Details', icon: 'code', task: 'Hero Section للكورسات (السعر، المدرس، CTA)', completed: false, priority: 'high' },
+            { id: 10, category: 'Course Details', icon: 'code', task: "What You'll Learn Section", completed: false, priority: 'medium' },
+            { id: 11, category: 'Course Details', icon: 'code', task: 'Syllabus (Accordion)', completed: false, priority: 'medium' },
+            { id: 12, category: 'Course Details', icon: 'code', task: 'Tools Covered Section', completed: false, priority: 'low' },
+            // Studio Program Page
+            { id: 13, category: 'Studio Program', icon: 'users', task: 'Program Overview Section', completed: false, priority: 'high' },
+            { id: 14, category: 'Studio Program', icon: 'users', task: 'Partner Companies Showcase', completed: false, priority: 'medium' },
+            { id: 15, category: 'Studio Program', icon: 'settings', task: 'Technology & Tools Section', completed: false, priority: 'medium' },
+            { id: 16, category: 'Studio Program', icon: 'users', task: 'Discord Application CTA', completed: false, priority: 'low' },
+            // Registration & User Pages
+            { id: 17, category: 'Authentication', icon: 'database', task: 'Registration Form (Name, Email, Password)', completed: false, priority: 'high' },
+            { id: 18, category: 'Authentication', icon: 'code', task: 'Post-Registration Flow', completed: false, priority: 'high' },
+            { id: 19, category: 'User Dashboard', icon: 'users', task: 'Welcome Screen', completed: false, priority: 'medium' },
+            { id: 20, category: 'User Dashboard', icon: 'code', task: 'Enrolled Courses Access', completed: false, priority: 'medium' },
+            { id: 21, category: 'User Dashboard', icon: 'users', task: 'Discord Links', completed: false, priority: 'low' },
+            { id: 22, category: 'User Profile', icon: 'settings', task: 'Edit User Information', completed: false, priority: 'medium' },
+            { id: 23, category: 'User Profile', icon: 'settings', task: 'Course Enrollment History', completed: false, priority: 'low' },
+            { id: 24, category: 'User Profile', icon: 'settings', task: 'Profile Picture Upload', completed: false, priority: 'low' },
+            // Admin Dashboard
+            { id: 25, category: 'Admin Dashboard', icon: 'database', task: 'Admin Login System', completed: false, priority: 'high' },
+            { id: 26, category: 'Admin Dashboard', icon: 'users', task: 'View Registered Users', completed: false, priority: 'medium' },
+            { id: 27, category: 'Admin Dashboard', icon: 'code', task: 'Manage Course Content', completed: false, priority: 'medium' },
+            { id: 28, category: 'Admin Dashboard', icon: 'settings', task: 'Basic Content Moderation', completed: false, priority: 'low' },
+            // Backend & Database
+            { id: 29, category: 'Backend', icon: 'database', task: 'Database Setup (Users, Courses, Enrollments)', completed: false, priority: 'high' },
+            { id: 30, category: 'Backend', icon: 'database', task: 'Authentication API', completed: false, priority: 'high' },
+            { id: 31, category: 'Backend', icon: 'database', task: 'Course Management API', completed: false, priority: 'medium' },
+            { id: 32, category: 'Backend', icon: 'database', task: 'User Profile API', completed: false, priority: 'medium' }
+        ];
+
+        // Get completed tasks from URL
+        function getCompletedFromURL() {
+            const params = new URLSearchParams(window.location.search);
+            const completed = params.get('completed');
+            return completed ? completed.split(',').map(id => parseInt(id)) : [];
+        }
+
+        // Update tasks with completed state from URL
+        const completedIds = getCompletedFromURL();
+        if (completedIds.length > 0) {
+            tasks.forEach(task => {
+                task.completed = completedIds.includes(task.id);
+            });
+        }
+
+        // Update URL with completed tasks
+        function updateURL() {
+            const completedIds = tasks.filter(task => task.completed).map(task => task.id);
+            const params = new URLSearchParams();
+            if (completedIds.length > 0) {
+                params.set('completed', completedIds.join(','));
+            }
+            const newUrl = window.location.pathname + (completedIds.length > 0 ? '?' + params.toString() : '');
+            window.history.replaceState({}, '', newUrl);
+        }
+
+        // Toggle task completion
+        function toggleTask(id) {
+            const task = tasks.find(task => task.id === id);
+            task.completed = !task.completed;
+            updateURL();
+            render();
+        }
+
+        // Share progress
+        async function shareProgress() {
+            const currentUrl = window.location.href;
+            try {
+                await navigator.clipboard.writeText(currentUrl);
+                showShareMessage();
+            } catch (err) {
+                const textArea = document.createElement('textarea');
+                textArea.value = currentUrl;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showShareMessage();
+            }
+        }
+
+        function showShareMessage() {
+            const shareMessage = document.getElementById('share-message');
+            shareMessage.classList.remove('hidden');
+            setTimeout(() => shareMessage.classList.add('hidden'), 3000);
+        }
+
+        // Get completion stats
+        function getCompletionStats() {
+            const completed = tasks.filter(task => task.completed).length;
+            const total = tasks.length;
+            const percentage = Math.round((completed / total) * 100);
+            return { completed, total, percentage };
+        }
+
+        // Get category stats
+        function getCategoryStats(category) {
+            const categoryTasks = tasks.filter(task => task.category === category);
+            const completed = categoryTasks.filter(task => task.completed).length;
+            const total = categoryTasks.length;
+            const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+            return { completed, total, percentage };
+        }
+
+        // Get priority color classes
+        function getPriorityColor(priority) {
+            switch(priority) {
+                case 'high': return 'text-red-600 bg-red-50 border-red-200';
+                case 'medium': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+                case 'low': return 'text-green-600 bg-green-50 border-green-200';
+                default: return 'text-gray-600 bg-gray-50 border-gray-200';
+            }
+        }
+
+        // Render categories
+        function renderCategories() {
+            const categories = [...new Set(tasks.map(task => task.category))];
+            const categoriesContainer = document.getElementById('categories');
+            categoriesContainer.innerHTML = '';
+
+            categories.forEach(category => {
+                const categoryTasks = tasks.filter(task => task.category === category);
+                const categoryStats = getCategoryStats(category);
+                
+                const categoryDiv = document.createElement('div');
+                categoryDiv.className = 'bg-white rounded-lg shadow-md overflow-hidden';
+                categoryDiv.innerHTML = `
+                    <div class="bg-gradient-to-r from-gray-700 to-gray-900 text-white p-4">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-xl font-semibold">${category}</h2>
+                            <div class="text-sm">
+                                <span class="bg-white bg-opacity-20 px-3 py-1 rounded-full">
+                                    ${categoryStats.completed}/${categoryStats.total} (${categoryStats.percentage}%)
+                                </span>
+                            </div>
+                        </div>
+                        ${categoryStats.total > 0 ? `
+                            <div class="mt-2 w-full bg-white bg-opacity-20 rounded-full h-2">
+                                <div class="bg-white rounded-full h-2 progress-bar" style="width: ${categoryStats.percentage}%"></div>
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="p-4">
+                        <div class="space-y-3">
+                            ${categoryTasks.map(task => `
+                                <div 
+                                    class="flex items-center p-3 rounded-lg border transition-all duration-200 hover:shadow-md cursor-pointer ${
+                                        task.completed 
+                                            ? 'bg-green-50 border-green-200 opacity-75' 
+                                            : 'bg-white border-gray-200 hover:border-blue-300'
+                                    }" 
+                                    data-task-id="${task.id}"
+                                >
+                                    <div class="flex items-center flex-1">
+                                        ${task.completed ? `
+                                            <i data-lucide="check-circle-2" class="w-6 h-6 text-green-500 mr-3"></i>
+                                        ` : `
+                                            <i data-lucide="circle" class="w-6 h-6 text-gray-400 mr-3 hover:text-blue-500"></i>
+                                        `}
+                                        <div class="flex items-center mr-3 text-gray-500">
+                                            <i data-lucide="${task.icon}" class="w-4 h-4"></i>
+                                        </div>
+                                        <span class="flex-1 text-right ${
+                                            task.completed ? 'line-through text-gray-500' : 'text-gray-800'
+                                        }">
+                                            ${task.task}
+                                        </span>
+                                    </div>
+                                    <div class="px-2 py-1 rounded-full text-xs border ${getPriorityColor(task.priority)}">
+                                        ${task.priority === 'high' ? 'عالي' : task.priority === 'medium' ? 'متوسط' : 'منخفض'}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+                categoriesContainer.appendChild(categoryDiv);
+            });
+
+            // Re-initialize Lucide icons
+            lucide.createIcons();
+
+            // Add event listeners
+            document.querySelectorAll('[data-task-id]').forEach(taskDiv => {
+                taskDiv.addEventListener('click', () => {
+                    const taskId = parseInt(taskDiv.dataset.taskId);
+                    toggleTask(taskId);
+                });
+            });
+        }
+
+        // Render stats
+        function renderStats() {
+            const stats = getCompletionStats();
+            document.getElementById('progress-percentage').textContent = `${stats.percentage}%`;
+            document.getElementById('progress-bar').style.width = `${stats.percentage}%`;
+            document.getElementById('progress-stats').textContent = `${stats.completed} من ${stats.total} مهمة مكتملة`;
+            
+            document.getElementById('high-priority-count').textContent = tasks.filter(t => t.priority === 'high' && !t.completed).length;
+            document.getElementById('medium-priority-count').textContent = tasks.filter(t => t.priority === 'medium' && !t.completed).length;
+            document.getElementById('completed-count').textContent = tasks.filter(t => t.completed).length;
+
+            document.getElementById('url-info').classList.toggle('hidden', stats.completed === 0);
+        }
+
+        // Main render
+        function render() {
+            renderCategories();
+            renderStats();
+        }
+
+        // Initial render
+        render();
+
+        // Share progress event
+        document.getElementById('share-progress').addEventListener('click', shareProgress);
+    </script>
+</body>
+</html>
